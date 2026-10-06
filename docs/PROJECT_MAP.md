@@ -195,10 +195,10 @@ Every tool receives a `ToolContext(user_id, conversation_id, trip_id?)` and call
 | Capability | Abstraction | Initial provider (proposed) | Notes |
 |---|---|---|---|
 | LLM | `AIProvider` | OpenAI | Models configured via env per tier |
-| Map tiles | `MapAdapter` (frontend) | MapLibre + MapTiler/Protomaps — **needs confirmation** | Public key is domain-restricted |
-| Geocoding | `GeocodingProvider` | **needs confirmation** (Google / Geoapify / Nominatim) | Cached in Redis + `destinations` |
-| Places | `PlaceProvider` | **needs confirmation** (Google Places / Foursquare / Geoapify+OSM) | Biggest quality driver |
-| Routing | `RoutingProvider` | **needs confirmation** (OpenRouteService / GraphHopper / Google Routes) | Transit is provider-dependent |
+| Map tiles | `MapAdapter` (frontend) | MapLibre + MapTiler (ADR-011) | Public key is domain-restricted |
+| Geocoding | `GeocodingProvider` | Google Geocoding (ADR-012) | Cached in Redis + `destinations` |
+| Places | `PlaceProvider` | Google Places API (New) (ADR-012) | ToS check is a Phase 5 entry gate |
+| Routing | `RoutingProvider` | OpenRouteService (ADR-013) | No transit; shown as unavailable, never invented |
 | Weather | `WeatherProvider` | Open-Meteo | No key for non-commercial use |
 | Optimization | in-process | OR-Tools | Deterministic scheduling |
 | FX rates | `FxProvider` | Frankfurter (ECB) | Daily rates, cached |
@@ -246,21 +246,22 @@ Phases 0–20 from the handoff. MVP = Phases 1–10 (with a thin slice of 11). S
 
 ---
 
-## 14. Decisions that need confirmation before Phase 1
+## 14. Decisions
 
-These are tracked in [DECISIONS.md](DECISIONS.md) with options and a recommendation. Phase 1 (foundation) does not
-depend on 1–4; they block Phases 5–9.
+Confirmed 2026-10-06 (see [DECISIONS.md](DECISIONS.md)):
 
-1. **Places provider** — Google Places (best data, strict caching ToS, highest cost) vs Foursquare vs
-   Geoapify/OSM (cheap, weaker restaurant data). *Recommended: Google Places (New) for MVP quality, behind
-   `PlaceProvider`, storing only place IDs + short-TTL details as ToS allows.*
-2. **Map tiles** — MapTiler (free tier, key) vs Protomaps (self-hosted PMTiles, no key). *Recommended: MapTiler for
-   MVP.*
-3. **Routing provider** — OpenRouteService (free tier, walk/drive/cycle, no transit) vs Google Routes (transit) vs
-   self-hosted OSRM. *Recommended: OpenRouteService for MVP; transit deferred.*
-4. **OpenAI model per tier** — model IDs are env-configured; you need to choose current models and provide a key.
-5. **Auth approach** — *Recommended: first-party opaque session tokens in httpOnly cookies (ADR-004)*, not JWT.
-6. **Python 3.14 / Postgres 17 / pnpm + uv** — *Recommended as stated (ADR-010).*
+| Decision | Choice | ADR |
+|---|---|---|
+| Places + geocoding | Google Places API (New) + Google Geocoding — terms check before Phase 5 | ADR-012 |
+| Map tiles | MapTiler | ADR-011 |
+| Routing | OpenRouteService (walk/drive/cycle; transit deferred) | ADR-013 |
+| Auth | First-party opaque session cookies | ADR-004 |
+| Runtimes | Python 3.14, Node 22 LTS (containers), Postgres 17 + pgvector, Redis 7, pnpm, uv | ADR-010 |
+
+Still open (not blocking Phase 1):
+- **OpenAI model IDs per tier** — set via `AI_MODEL_*` env vars before Phase 9; an OpenAI API key is needed then.
+- **API keys** for Google Maps Platform, MapTiler and OpenRouteService — needed from Phases 5–6; fake providers
+  cover development until then.
 
 ## 15. Foundation implementation plan (Phase 1)
 

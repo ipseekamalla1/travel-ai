@@ -32,7 +32,7 @@ Status: **Accepted**, **Proposed** (awaiting confirmation), **Superseded**.
 - **Consequences:** API field names are snake_case in TS (accepted to avoid a mapping layer).
 
 ## ADR-004 — First-party cookie sessions (opaque tokens) instead of JWT
-**Status:** Proposed — recommended
+**Status:** Accepted (confirmed 2026-10-06)
 - **Problem:** Secure auth for a browser app now and a native app later.
 - **Options:** (a) opaque session token in httpOnly cookie, hashed in Postgres; (b) JWT access + refresh tokens;
   (c) hosted auth (Auth.js in Next, Clerk, Supabase Auth).
@@ -65,7 +65,7 @@ Status: **Accepted**, **Proposed** (awaiting confirmation), **Superseded**.
 - **Replacement path:** Self-host PMTiles (Protomaps) behind our domain to remove the key entirely.
 
 ## ADR-007 — Places data: store provider IDs, cache details within provider terms
-**Status:** Proposed — depends on ADR-012 provider choice
+**Status:** Accepted (provider: Google Places, ADR-012)
 - **Problem:** We want canonical `places` rows for joins (itinerary, saves), but providers (notably Google) restrict
   long-term storage of content other than place IDs.
 - **Decision:** `places` rows always keep `provider` + `provider_place_id` + our UUID. Detail fields are a cache with
@@ -94,19 +94,19 @@ Status: **Accepted**, **Proposed** (awaiting confirmation), **Superseded**.
 - **Consequences:** Aggregation logic (signals → weights) is application code, tested deterministically.
 
 ## ADR-010 — Runtime versions and tooling
-**Status:** Proposed — recommended
+**Status:** Accepted
 - Python **3.14** (matches local; native `uuid.uuid7()`), Node **22 LTS** in containers (local Node 23 works for
   dev), PostgreSQL **17** (`pgvector/pgvector:pg17`), Redis **7**, pnpm via corepack, uv for Python, arq for jobs.
 - **Replacement path:** Versions pinned in Dockerfiles/`.python-version`/`packageManager`; bump deliberately.
 
 ## ADR-011 — Map tile provider
-**Status:** Proposed — needs confirmation
+**Status:** Accepted (confirmed 2026-10-06) — **MapTiler**
 - **Options:** (a) MapTiler (free tier, good styles, key); (b) Stadia Maps; (c) Protomaps self-hosted PMTiles
   (no key, we host the file); (d) Mapbox (requires Mapbox GL for best results; license).
 - **Recommendation:** (a) MapTiler for MVP speed; (c) as cost-control path.
 
 ## ADR-012 — Places & geocoding provider
-**Status:** Proposed — needs confirmation (largest product-quality lever)
+**Status:** Accepted (confirmed 2026-10-06) — **Google Places API (New) + Google Geocoding**, with the terms check below as a Phase 5 entry gate
 - **Options:**
   - (a) **Google Places API (New) + Geocoding** — best coverage of restaurants/attractions, hours, price level,
     ratings, photos; per-request cost and strict caching/attribution terms; must display on/with Google-compatible
@@ -118,9 +118,12 @@ Status: **Accepted**, **Proposed** (awaiting confirmation), **Superseded**.
   `GeocodingProvider`; fake provider for dev/tests so day-to-day work costs nothing.
 - **Note:** Google's terms restrict showing Places content on non-Google maps in some cases — must be verified
   against current terms before committing; if it conflicts with MapLibre, prefer (b).
+- **Phase 5 entry gate:** re-read Google Maps Platform terms on (1) displaying Places content on a non-Google map,
+  (2) caching limits, (3) attribution. If (1) is disallowed, either switch to Foursquare or show Google content only
+  in list/detail views — decision recorded as a new ADR.
 
 ## ADR-013 — Routing provider
-**Status:** Proposed — needs confirmation
+**Status:** Accepted (confirmed 2026-10-06) — **OpenRouteService**
 - **Options:** (a) OpenRouteService (hosted, free tier, walk/drive/cycle, matrix API, no transit); (b) GraphHopper
   (similar, transit via GTFS self-host); (c) Google Routes (transit, cost); (d) self-hosted OSRM (no transit, ops).
 - **Recommendation:** (a) for MVP with walking/driving matrices; transit estimates deferred (labeled "transit times
