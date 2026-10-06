@@ -46,10 +46,12 @@ class AppError(Exception):
         *,
         errors: list[FieldError] | None = None,
         code: str | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(detail or self.title)
         self.detail = detail
         self.errors = errors or []
+        self.headers = headers
         if code:
             self.code = code
 
@@ -80,6 +82,10 @@ class ValidationFailedError(AppError):
 
 class RateLimitedError(AppError):
     status, code, title = 429, "RATE_LIMITED", "Too many requests"
+
+    def __init__(self, detail: str | None = None, *, retry_after_s: int) -> None:
+        super().__init__(detail, headers={"Retry-After": str(retry_after_s)})
+        self.retry_after_s = retry_after_s
 
 
 class ProviderUnavailableError(AppError):
@@ -137,7 +143,12 @@ async def _app_error_handler(_request: Request, exc: Exception) -> JSONResponse:
     if exc.status >= 500:
         log.error("app_error", code=exc.code, error=str(exc))
     return problem_response(
-        status=exc.status, code=exc.code, title=exc.title, detail=exc.detail, errors=exc.errors
+        status=exc.status,
+        code=exc.code,
+        title=exc.title,
+        detail=exc.detail,
+        errors=exc.errors,
+        headers=exc.headers,
     )
 
 

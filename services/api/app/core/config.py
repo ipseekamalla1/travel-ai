@@ -38,6 +38,15 @@ class Settings(BaseSettings):
     redis_url: RedisDsn = RedisDsn("redis://localhost:6379/0")
 
     auth_secret: SecretStr = SecretStr("dev-only-insecure-secret-change-me")
+    session_idle_days: int = 14
+    session_absolute_days: int = 60
+    # Secure cookies need HTTPS; defaults to on outside local/test (see `cookies_secure`).
+    cookie_secure: bool | None = None
+    # Honour X-Forwarded-For for client IPs (rate limiting). Only enable behind a trusted proxy
+    # (the Next.js rewrite in dev, the platform load balancer in production).
+    trust_forwarded_for: bool = True
+
+    rate_limit_auth_per_minute: int = 10
 
     providers_mode: ProvidersMode = ProvidersMode.FAKE
 
@@ -57,6 +66,17 @@ class Settings(BaseSettings):
         if isinstance(value, str) and value.startswith(("postgresql://", "postgres://")):
             return "postgresql+asyncpg://" + value.split("://", 1)[1]
         return value
+
+    @property
+    def cookies_secure(self) -> bool:
+        if self.cookie_secure is not None:
+            return self.cookie_secure
+        return self.app_env not in {AppEnv.LOCAL, AppEnv.TEST}
+
+    @property
+    def allowed_origins(self) -> set[str]:
+        """Origins allowed to make state-changing requests (CSRF Origin check)."""
+        return {self.web_base_url.rstrip("/"), *(o.rstrip("/") for o in self.cors_origins)}
 
     @property
     def is_production(self) -> bool:

@@ -9,10 +9,13 @@ from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.engine import make_url
 
+from app.common.models import Base
 from app.core.config import AppEnv, ProvidersMode, Settings
 from app.main import create_app
+from app.models import import_all_models
 
 API_ROOT = Path(__file__).resolve().parents[1]
 TEST_DATABASE_URL = os.environ.get(
@@ -30,6 +33,10 @@ def make_settings(**overrides: object) -> Settings:
         "log_json": False,
         "log_level": "WARNING",
         "readiness_timeout_s": 1.0,
+        # Pinned so developer/CI environment variables can't change test behaviour.
+        "rate_limit_auth_per_minute": 10,
+        "web_base_url": "http://localhost:3000",
+        "cors_origins": [],
     }
     values.update(overrides)
     return Settings(_env_file=None, **values)  # type: ignore[arg-type]
@@ -87,3 +94,15 @@ async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as http:
         yield http
+
+
+@pytest.fixture
+async def clean_state(migrated_db: str, app: FastAPI) -> None:
+    """Start the test from empty tables and an empty Redis test database (rate limits etc.)."""
+    import_all_models()
+    tables = ", ".join(f'"{table.name}"' for table in Base.metadata.sorted_tables)
+    if tables:
+        async with app.state.session_factory() as db:
+            await db.execute(text(f"TRUNCATE {tables} CASCADE"))
+            await db.commit()
+    await app.state.redis.flushdb()
