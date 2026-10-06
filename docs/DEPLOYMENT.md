@@ -16,7 +16,7 @@
 
 | Unit | Image | Scaling |
 |---|---|---|
-| web | `infra/docker/web.Dockerfile` (Next.js standalone output) | stateless, horizontal |
+| web | `infra/docker/web.Dockerfile` (Next.js standalone output; `API_INTERNAL_URL` is a **build arg** because rewrites are resolved at build time) | stateless, horizontal |
 | api | `infra/docker/api.Dockerfile` (uvicorn, multiple workers) | stateless, horizontal |
 | worker | same image as api, `arq` entrypoint | horizontal by queue depth |
 | postgres | managed Postgres 17 with pgvector | vertical; PITR backups |

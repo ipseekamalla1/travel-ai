@@ -1,7 +1,6 @@
 # AI Travel Universe — Project Map
 
-> Status: **Phase 0 (Project Map)**. No application code exists yet. This map is the single entry point into the
-> system design. Each section summarizes one layer and links to the detailed document that owns it.
+> Status: **Phase 1 (Foundation) complete.** This map is the single entry point into the system design. Each section summarizes one layer and links to the detailed document that owns it.
 >
 > Last updated: 2026-10-06
 
@@ -97,7 +96,7 @@ Details: [UX.md](UX.md).
 | API types | Generated from FastAPI OpenAPI → `packages/types` (openapi-typescript) |
 | API client | Thin typed `fetch` wrapper (`lib/api`), same-origin `/api/v1/*` via Next rewrites |
 | Maps | MapLibre GL JS behind a `MapAdapter` component boundary |
-| Auth | httpOnly session cookie set by API; `middleware.ts` redirects when absent; server is the authority |
+| Auth | httpOnly session cookie set by API; `proxy.ts` (Next 16's renamed middleware) redirects when absent; server is the authority |
 
 Structure is **feature-based**: `src/features/<feature>/{api,components,hooks,schemas,store}`; `src/app` only
 composes features into routes; `src/components/ui` holds the design system. Details:
@@ -216,7 +215,7 @@ docker compose up
   redis     redis:7                     :6379
 ```
 
-Tooling: pnpm workspaces (via corepack) for JS, uv for Python, Makefile task runner, pre-commit hooks, GitHub
+Tooling: pnpm workspaces (via corepack) for JS, uv for Python, Makefile task runner, GitHub
 Actions CI (lint, typecheck, tests, build, migration check). Config via `.env` (see `.env.example`); no server
 secrets in `NEXT_PUBLIC_*`. Details: [ARCHITECTURE.md §8](ARCHITECTURE.md#8-infrastructure) and
 [DEPLOYMENT.md](DEPLOYMENT.md).
@@ -263,9 +262,9 @@ Still open (not blocking Phase 1):
 - **API keys** for Google Maps Platform, MapTiler and OpenRouteService — needed from Phases 5–6; fake providers
   cover development until then.
 
-## 15. Foundation implementation plan (Phase 1)
+## 15. Foundation implementation plan (Phase 1) — ✅ done 2026-10-06
 
-Order follows §68 of the handoff. Each step ends green before the next.
+Order follows §68 of the handoff. Each step ends green before the next. Deviations are listed at the end.
 
 1. Root: `.gitignore`, `.editorconfig`, `README.md`, `Makefile`, `.env.example`, `pnpm-workspace.yaml`,
    root `package.json` (corepack-pinned pnpm).
@@ -284,3 +283,11 @@ Order follows §68 of the handoff. Each step ends green before the next.
    services, `alembic upgrade head` + `alembic check`), types drift.
 8. Verify: `docker compose up` → web :3000 renders, api :8000 `/api/v1/health/ready` = ok; all tests pass.
 9. Commit in logical steps (`chore(repo)`, `feat(web)`, `feat(api)`, `chore(infra)`, `ci`, `docs`).
+
+**Phase 1 deviations from this plan (as built):**
+- `packages/config` was not created — shared config lives at the root (`.prettierrc.json`, `.editorconfig`);
+  revisit if a second JS app appears.
+- No `seed` script yet: there are no domain tables to seed. It arrives with Phase 2 (users).
+- No pre-commit hooks; `make check` and CI enforce the same checks.
+- App route group `(app)` is not scaffolded — routes are created in the phase that implements them, so no
+  placeholder pages exist.

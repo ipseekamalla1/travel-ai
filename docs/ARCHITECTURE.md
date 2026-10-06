@@ -36,8 +36,7 @@ recorded in ADR-006.
 ├── services/
 │   └── api/                     FastAPI app + arq worker + Alembic
 ├── packages/
-│   ├── types/                   OpenAPI-generated TS types (generated, committed, drift-checked in CI)
-│   └── config/                  Shared ESLint / Prettier / TS configs
+│   └── types/                   OpenAPI-generated TS types (generated, committed, drift-checked in CI)
 ├── infra/
 │   └── docker/                  Dockerfiles, compose overrides, postgres init scripts
 ├── scripts/                     dev, migrate, seed, gen-types helpers
@@ -85,7 +84,7 @@ app/
     profile/
     settings/
   layout.tsx, providers.tsx, error.tsx, not-found.tsx, global-error.tsx
-middleware.ts             cookie-presence redirect for (app) routes
+proxy.ts                  cookie-presence redirect for (app) routes (Next 16 renamed middleware → proxy)
 
 components/
   ui/                     shadcn/ui primitives, owned and themed (button, input, dialog, drawer, sheet, tabs, toast…)
@@ -124,6 +123,8 @@ another feature's internals (only its `index.ts` public surface).
 ### 3.2 Rendering strategy
 
 - Marketing: static server components.
+- `cacheComponents` is enabled (Next 16): anything reading `cookies()`/`headers()` must sit behind `<Suspense>`
+  (see Next's "Authentication with Cache Components" guide bundled in `node_modules/next/dist/docs`).
 - App routes: server components render the shell and do **auth redirect only**; data is fetched client-side via
   TanStack Query against `/api/v1` so caching, optimistic updates and mutations stay in one model. (We can later
   prefetch on the server with `HydrationBoundary` for first paint where it matters, e.g. trip overview.)

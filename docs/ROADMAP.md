@@ -4,8 +4,8 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started
 
 | Phase | Name | Status | Exit criteria |
 |---|---|---|---|
-| 0 | Project map | 🟡 | Docs complete; open decisions confirmed |
-| 1 | Foundation | ⬜ | `docker compose up` → web :3000 + api `/health/ready` ok; lint/typecheck/tests green locally and in CI |
+| 0 | Project map | ✅ | Docs complete; open decisions confirmed |
+| 1 | Foundation | ✅ | `docker compose up` → web :3000 + api `/health/ready` ok; lint/typecheck/tests green locally and in CI |
 | 2 | Auth | ⬜ | Register/login/logout/me; protected routes; CSRF; rate limits; authz test harness |
 | 3 | Travel profile | ⬜ | Onboarding; profile + preferences editable; signals table recording |
 | 4 | Trips | ⬜ | CRUD; days generated; travelers (owner); budget row; overview page |

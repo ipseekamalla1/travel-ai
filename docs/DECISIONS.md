@@ -96,7 +96,11 @@ Status: **Accepted**, **Proposed** (awaiting confirmation), **Superseded**.
 ## ADR-010 — Runtime versions and tooling
 **Status:** Accepted
 - Python **3.14** (matches local; native `uuid.uuid7()`), Node **22 LTS** in containers (local Node 23 works for
-  dev), PostgreSQL **17** (`pgvector/pgvector:pg17`), Redis **7**, pnpm via corepack, uv for Python, arq for jobs.
+  dev), PostgreSQL **17** (`pgvector/pgvector:pg17`), Redis **7**, pnpm **12** via corepack, uv for Python, arq for jobs.
+- As built in Phase 1: Next.js **16.4** (Turbopack, `cacheComponents`), React 19.3, Tailwind 4, shadcn/ui (radix-nova),
+  Vitest 5, Playwright 1.63, FastAPI 0.142, SQLAlchemy 2.1, Pydantic 2.13.
+- **TypeScript pinned to 5.x**: TypeScript 7 (native compiler) has no JS compiler API, which `openapi-typescript`
+  and other tooling still need. Revisit when the tooling supports TS 7.
 - **Replacement path:** Versions pinned in Dockerfiles/`.python-version`/`packageManager`; bump deliberately.
 
 ## ADR-011 — Map tile provider

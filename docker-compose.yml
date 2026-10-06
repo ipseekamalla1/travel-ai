@@ -1,0 +1,111 @@
+# Local development stack. Usage: `cp .env.example .env && docker compose up`
+# Ports are configurable via .env (WEB_PORT, API_PORT, POSTGRES_PORT, REDIS_PORT).
+
+name: atu
+
+x-api-env: &api-env
+  APP_ENV: local
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_JSON: ${LOG_JSON:-false}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-atu}:${POSTGRES_PASSWORD:-atu}@postgres:5432/${POSTGRES_DB:-atu}
+  REDIS_URL: redis://redis:6379/0
+  AUTH_SECRET: ${AUTH_SECRET:-dev-only-insecure-secret-change-me}
+  PROVIDERS_MODE: ${PROVIDERS_MODE:-fake}
+  WEB_BASE_URL: http://localhost:${WEB_PORT:-3000}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-atu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atu}
+      POSTGRES_DB: ${POSTGRES_DB:-atu}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      target: dev
+    environment:
+      <<: *api-env
+      RUN_MIGRATIONS_ON_START: "true"
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./services/api:/app
+      - /app/.venv # keep any host venv out of the container
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3).status == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      target: dev
+    command: ["arq", "app.workers.settings.WorkerSettings", "--watch", "app"]
+    environment:
+      <<: *api-env
+    volumes:
+      - ./services/api:/app
+      - /app/.venv
+    depends_on:
+      api: { condition: service_healthy } # api applies migrations first
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      target: dev
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      NEXT_PUBLIC_MAP_STYLE_URL: ${NEXT_PUBLIC_MAP_STYLE_URL:-}
+      NEXT_PUBLIC_MAP_TILES_KEY: ${NEXT_PUBLIC_MAP_TILES_KEY:-}
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./apps/web:/repo/apps/web
+      - ./packages:/repo/packages
+      - /repo/node_modules
+      - /repo/apps/web/node_modules
+      - /repo/apps/web/.next
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+volumes:
+  postgres-data:

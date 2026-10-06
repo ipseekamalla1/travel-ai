@@ -5,6 +5,8 @@ from typing import Annotated
 from pydantic import Field, PostgresDsn, RedisDsn, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+MIN_PRODUCTION_SECRET_LENGTH = 32
+
 
 class AppEnv(StrEnum):
     LOCAL = "local"
@@ -63,8 +65,12 @@ class Settings(BaseSettings):
     def assert_safe_for_production(self) -> None:
         if not self.is_production:
             return
-        if self.auth_secret.get_secret_value().startswith("dev-only"):
-            raise RuntimeError("AUTH_SECRET must be set in production")
+        secret = self.auth_secret.get_secret_value()
+        if secret.startswith("dev-only") or len(secret) < MIN_PRODUCTION_SECRET_LENGTH:
+            raise RuntimeError(
+                f"AUTH_SECRET must be set to a random value of at least "
+                f"{MIN_PRODUCTION_SECRET_LENGTH} characters in production"
+            )
         if self.providers_mode is not ProvidersMode.REAL:
             raise RuntimeError("PROVIDERS_MODE must be 'real' in production")
 
