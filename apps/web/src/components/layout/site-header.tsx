@@ -17,7 +17,7 @@ export function SiteHeader() {
       <nav aria-label="Main">
         <ul className="flex items-center gap-1 text-sm">
           {NAV_LINKS.map((link) => (
-            <li key={link.href}>
+            <li key={link.href} className="hidden sm:block">
               <Link
                 href={link.href}
                 className="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
@@ -26,6 +26,14 @@ export function SiteHeader() {
               </Link>
             </li>
           ))}
+          <li>
+            <Link
+              href="/login"
+              className="rounded-full px-4 py-2 font-medium transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              Sign in
+            </Link>
+          </li>
         </ul>
       </nav>
     </header>

@@ -26,6 +26,6 @@ describe("LandingPage", () => {
     render(<LandingPage />);
 
     const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
-    expect(hrefs).toEqual(["/how-it-works"]);
+    expect(hrefs).toEqual(["/register", "/how-it-works"]);
   });
 });

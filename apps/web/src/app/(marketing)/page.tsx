@@ -32,8 +32,11 @@ export default function LandingPage() {
           Describe the trip you want in your own words. Get a plan built from real places, shaped
           around your pace, your budget and what you love — then let it adapt as you go.
         </p>
-        <div>
+        <div className="flex flex-wrap gap-3">
           <Button asChild size="lg" className="h-11 rounded-full px-6 text-base">
+            <Link href="/register">Start your universe</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="h-11 rounded-full px-6 text-base">
             <Link href="/how-it-works">See how it works</Link>
           </Button>
         </div>

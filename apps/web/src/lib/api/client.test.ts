@@ -14,6 +14,7 @@ function jsonResponse(status: number, body: unknown, headers: Record<string, str
 
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
+  document.cookie = "atu_csrf=token-123";
 });
 
 afterEach(() => {
@@ -46,6 +47,41 @@ describe("apiFetch", () => {
     expect(init.body).toBe(JSON.stringify({ name: "Japan" }));
     expect(headers.get("Content-Type")).toBe("application/json");
     expect(headers.get("X-CSRF-Token")).toBe("token-123");
+  });
+
+  it("bootstraps a CSRF token before the first unsafe request", async () => {
+    document.cookie = "atu_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(200, { csrf_token: "fresh-token" }))
+      .mockResolvedValueOnce(jsonResponse(201, { id: "t1" }));
+
+    await apiFetch("/trips", { json: { name: "Japan" } });
+
+    expect(fetchMock.mock.calls[0]![0]).toBe("/api/v1/auth/csrf");
+    expect(new Headers(fetchMock.mock.calls[1]![1]!.headers).get("X-CSRF-Token")).toBe(
+      "fresh-token",
+    );
+  });
+
+  it("refreshes a stale CSRF token once and retries", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(403, { code: "CSRF_FAILED", errors: [] }))
+      .mockResolvedValueOnce(jsonResponse(200, { csrf_token: "rotated" }))
+      .mockResolvedValueOnce(jsonResponse(200, { ok: true }));
+
+    await expect(apiFetch("/auth/logout", { method: "POST" })).resolves.toEqual({ ok: true });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(new Headers(fetchMock.mock.calls[2]![1]!.headers).get("X-CSRF-Token")).toBe("rotated");
+  });
+
+  it("does not retry other 403 errors", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(403, { code: "FORBIDDEN", errors: [] }));
+
+    const error = (await apiFetch("/trips", { json: {} }).catch((e: unknown) => e)) as ApiError;
+
+    expect(error.code).toBe("FORBIDDEN");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("does not send the CSRF token on safe methods", async () => {

@@ -72,33 +72,52 @@ async function toApiError(response: Response): Promise<ApiError> {
 
 export type ApiRequestInit = Omit<RequestInit, "body"> & { json?: unknown };
 
-export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
-  const { json, headers: initHeaders, ...rest } = init;
-  const method = (rest.method ?? (json === undefined ? "GET" : "POST")).toUpperCase();
-  const headers = new Headers(initHeaders);
-  headers.set("Accept", "application/json");
-
-  if (json !== undefined) headers.set("Content-Type", "application/json");
-  if (UNSAFE_METHODS.has(method)) {
-    const csrf = readCookie(CSRF_COOKIE);
-    if (csrf) headers.set(CSRF_HEADER, csrf);
-  }
-
-  let response: Response;
+async function send(path: string, init: RequestInit): Promise<Response> {
   try {
-    response = await fetch(`${API_PREFIX}${path}`, {
-      ...rest,
-      method,
-      headers,
-      credentials: "include",
-      body: json === undefined ? undefined : JSON.stringify(json),
-    });
+    return await fetch(`${API_PREFIX}${path}`, { ...init, credentials: "include" });
   } catch {
     throw new ApiError({
       status: 0,
       code: "NETWORK_ERROR",
       message: "Can't reach the server. Check your connection and try again.",
     });
+  }
+}
+
+/** Ensure a CSRF cookie exists (the API sets it) and return its value. */
+async function ensureCsrfToken(forceRefresh = false): Promise<string | null> {
+  const existing = readCookie(CSRF_COOKIE);
+  if (existing && !forceRefresh) return existing;
+  const response = await send("/auth/csrf", { headers: { Accept: "application/json" } });
+  if (!response.ok) throw await toApiError(response);
+  const body = (await response.json()) as { csrf_token: string };
+  return body.csrf_token;
+}
+
+export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Promise<T> {
+  const { json, headers: initHeaders, ...rest } = init;
+  const method = (rest.method ?? (json === undefined ? "GET" : "POST")).toUpperCase();
+  const unsafe = UNSAFE_METHODS.has(method);
+  const body = json === undefined ? undefined : JSON.stringify(json);
+
+  const buildHeaders = (csrf: string | null): Headers => {
+    const headers = new Headers(initHeaders);
+    headers.set("Accept", "application/json");
+    if (json !== undefined) headers.set("Content-Type", "application/json");
+    if (csrf) headers.set(CSRF_HEADER, csrf);
+    return headers;
+  };
+
+  const csrf = unsafe ? await ensureCsrfToken() : null;
+  let response = await send(path, { ...rest, method, body, headers: buildHeaders(csrf) });
+
+  // A stale token (e.g. rotated in another tab) gets one refresh-and-retry.
+  if (unsafe && response.status === 403) {
+    const error = await toApiError(response.clone());
+    if (error.code === "CSRF_FAILED") {
+      const fresh = await ensureCsrfToken(true);
+      response = await send(path, { ...rest, method, body, headers: buildHeaders(fresh) });
+    }
   }
 
   if (!response.ok) throw await toApiError(response);
