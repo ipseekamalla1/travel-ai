@@ -71,7 +71,15 @@ Content type `application/problem+json`. No stack traces or provider error bodie
 | GET | `/auth/me` | — | `200` `User` or `401` |
 | GET | `/auth/csrf` | — | `200 { csrf_token }` and sets cookie (bootstrap for first unsafe call) |
 
-`User = { id, email, display_name, home_currency, locale, units, onboarding_completed: bool, created_at }`
+`User = { id, email, display_name, home_currency, locale, units, created_at }` (`onboarding_completed` is added in
+Phase 3 with the travel profile).
+
+**As built (Phase 2):**
+- CSRF bootstrap: the web client calls `GET /auth/csrf` before its first unsafe request when no `atu_csrf` cookie
+  exists, and on `403 CSRF_FAILED` refreshes the token once and retries. Login/register rotate the CSRF token.
+- `POST /auth/logout` is idempotent (204 even without a valid session) so clients can always clear a stale cookie.
+- Rate limits: `RATE_LIMIT_AUTH_PER_MINUTE` (default 10) per IP for login and register; half that per email for login.
+- `EMAIL_TAKEN` (409) on register is a deliberate enumeration trade-off — see SECURITY.md §3.
 Password rules: 10–128 chars, checked against a small common-password list; no composition rules (NIST 800-63B).
 
 ### Phase 3 — Profile & travel profile

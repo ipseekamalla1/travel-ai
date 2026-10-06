@@ -364,7 +364,8 @@ Not found and not permitted both return 404.
 ## 5. Seed data
 
 `app/seed` creates deterministic data (fixed UUIDs, fixed dates relative to a constant anchor) clearly prefixed
-`[DEV]` in names, with users on the reserved `.test` domain (`dev@atu.test`). Places in seed data come from the
+`[DEV]` in names, with users on the reserved `example.com` domain (`dev@example.com`; RFC 2606 — `.test` is
+rejected by the email validator as a special-use TLD). The dev password comes from `SEED_DEV_PASSWORD`. Places in seed data come from the
 **fake** place provider fixtures, never invented as if real. Seeding refuses to run when `APP_ENV=production`.
 
 ## 6. Migration workflow

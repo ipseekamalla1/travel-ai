@@ -35,3 +35,12 @@
   store; nothing server-side in `NEXT_PUBLIC_*`.
 - **Dependencies:** Dependabot/Renovate; `pip-audit` and `pnpm audit` in CI (non-blocking at first).
 - **Data rights:** users can delete conversations now; account deletion (cascade) in Phase 20.
+
+## 3. Known trade-offs (as of Phase 2)
+
+| Trade-off | Why | Mitigation / exit |
+|---|---|---|
+| Register returns `409 EMAIL_TAKEN`, revealing that an email has an account | Without email verification there's no way to tell a returning user "check your inbox" instead; a silent success would strand real users | Strict per-IP register limit; login stays fully non-enumerating (same error, constant argon2 work). Switch to verify-by-email flow when email delivery exists |
+| Client IP for rate limits comes from the first `X-Forwarded-For` entry (`TRUST_FORWARDED_FOR=true`) | In dev the API is reached through the Next.js rewrite | Production must only expose the API behind a proxy that overwrites XFF, or set `TRUST_FORWARDED_FOR=false` |
+| CSRF uses signed double-submit + Origin check rather than per-session tokens | Stateless, works before login, cookie injection can't forge the HMAC | Tokens rotate on login/register |
+| Fixed-window rate limiting | Simple and adequate for auth | Sliding window if burst abuse at window edges shows up |

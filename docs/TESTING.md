@@ -15,8 +15,10 @@
 
 ## 2. Backend test infrastructure
 
-- Test DB created once per session; migrations applied; each test runs inside a transaction (nested savepoint) that
-  is rolled back.
+- Test DB (`atu_test`) created once per session and migrated to head. Tests that touch data use the `clean_state`
+  fixture, which truncates every model table and flushes the Redis test DB *before* the test (so a failed test
+  leaves data to inspect). Chosen over savepoint rollback because the app commits in its own sessions.
+- Test settings are pinned in `make_settings()` (never read `.env`) so local configuration can't change results.
 - Factories (`tests/factories`) build users, trips, days, items deterministically.
 - `as_user(client, user)` helper logs in and sets CSRF; `other_user` fixture for authorization tests.
 - Providers injected via `PROVIDERS_MODE=fake`; fake places/geocoding/routing/weather backed by JSON fixtures in

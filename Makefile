@@ -52,9 +52,12 @@ web: ## Run the web app natively (needs the API)
 	$(PNPM) --filter @atu/web dev --port $${WEB_PORT:-3000}
 
 # ---------- database ----------
-.PHONY: migrate migration
+.PHONY: migrate migration seed
 migrate: ## Apply database migrations
 	$(UV) run alembic upgrade head
+
+seed: ## Load deterministic development data (dev@example.com)
+	$(UV) run python -m app.seed
 
 migration: ## Create a migration: make migration m="add trips"
 	@test -n "$(m)" || (echo 'usage: make migration m="message"' && exit 1)

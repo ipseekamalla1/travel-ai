@@ -97,7 +97,11 @@ jobs:
     needs: [api, web]
     steps:
       - uses: actions/checkout@v5
-      - run: cp .env.example .env
+      - name: Configure stack for E2E
+        run: |
+          cp .env.example .env
+          # The suite registers many users from one IP; keep auth rate limits out of the way.
+          sed -i 's/^RATE_LIMIT_AUTH_PER_MINUTE=.*/RATE_LIMIT_AUTH_PER_MINUTE=200/' .env
       - name: Start stack
         run: docker compose up --build -d --wait --wait-timeout 300
       - uses: actions/setup-node@v5
