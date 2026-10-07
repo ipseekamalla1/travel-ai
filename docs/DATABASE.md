@@ -107,13 +107,14 @@ Core, frequently-queried scheduler inputs are real columns; the long tail lives 
 | user_id | uuid FK CASCADE | |
 | key | text NOT NULL | from a code registry: `interest.food.street_food`, `interest.nightlife`, `interest.photography`, `avoid.crowds`, `pref.tourist_spots` … |
 | weight | numeric(4,3) NOT NULL | `CHECK (weight BETWEEN -1 AND 1)`; negative = dislike |
-| value | jsonb NULL | optional structured detail (e.g. cuisines list) validated per key |
+| value | jsonb NULL | *Not yet created* — added by migration when the first key needs structured detail (e.g. a cuisines list) |
 | source | text NOT NULL | `onboarding`, `explicit`, `inferred`, `trip_request` |
 | confidence | numeric(4,3) NOT NULL DEFAULT 1 | inferred prefs < 1 |
 | created_at / updated_at | | |
 Unique `uq_travel_preferences_user_id_key`. Index `ix_travel_preferences_user_id`.
 
-**preference_signals** — append-only behavior log feeding the personality engine
+**preference_signals** — append-only behavior log feeding the personality engine. *Deferred to Phase 5*: nothing
+emits signals until places can be saved/rejected, so the table (with its `place_id`/`trip_id` FKs) is created then.
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |

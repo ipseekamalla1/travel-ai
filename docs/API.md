@@ -90,7 +90,12 @@ Password rules: 10–128 chars, checked against a small common-password list; no
 | PUT | `/me/travel-profile` | Replace core profile fields |
 | PATCH | `/me/travel-profile/preferences` | `{ upsert: [{ key, weight, value? }], remove: [key] }` |
 | POST | `/me/travel-profile/complete-onboarding` | Sets `onboarding_completed_at` |
-| GET | `/meta/preference-keys` | Registry of allowed preference keys + labels (drives onboarding UI) |
+| GET | `/meta/travel-profile-options` | Public. Every allowed profile value + label, preference groups/keys and supported currencies — drives onboarding and profile UI (`app/travel_profiles/registry.py`) |
+
+**As built (Phase 3):** the profile is created lazily with defaults on first read; `PATCH .../preferences` accepts
+`source: "onboarding" | "explicit"` only (clients can't claim `inferred`), weights in −1..1, ≤100 ops, and rejects a
+key that is both upserted and removed. `User` now includes `onboarding_completed`. `PATCH /me` changes only the
+fields sent; `home_currency` must be in the supported list.
 
 ### Phase 4 — Trips
 | Method | Path | Notes |

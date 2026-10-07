@@ -7,7 +7,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started
 | 0 | Project map | ✅ | Docs complete; open decisions confirmed |
 | 1 | Foundation | ✅ | `docker compose up` → web :3000 + api `/health/ready` ok; lint/typecheck/tests green locally and in CI |
 | 2 | Auth | ✅ | Register/login/logout/me; protected routes; CSRF; rate limits; authz test harness |
-| 3 | Travel profile | ⬜ | Onboarding; profile + preferences editable; signals table recording |
+| 3 | Travel profile | ✅ | Onboarding; profile + preferences editable (signals table moved to Phase 5) |
 | 4 | Trips | ⬜ | CRUD; days generated; travelers (owner); budget row; overview page |
 | 5 | Destinations + places | ⬜ | Geocoding, search, details, save/reject/rate, trip places — real provider + fake provider |
 | 6 | Map | ⬜ | Map with markers, clusters, filters, selection, route layer, list ↔ map sync |
