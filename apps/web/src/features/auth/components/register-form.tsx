@@ -15,7 +15,8 @@ import { FormAlert } from "./form-alert";
 
 export function RegisterForm() {
   const router = useRouter();
-  const next = safeNextPath(useSearchParams().get("next"));
+  // New accounts start with onboarding unless they were heading somewhere specific.
+  const next = safeNextPath(useSearchParams().get("next"), "/onboarding");
   const registerUser = useRegister();
   const {
     register,

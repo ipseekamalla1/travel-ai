@@ -28,5 +28,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Protected app areas (add each as its phase ships) + the auth pages.
-  matcher: ["/universe/:path*", "/login", "/register"],
+  matcher: ["/universe/:path*", "/onboarding/:path*", "/profile/:path*", "/login", "/register"],
 };

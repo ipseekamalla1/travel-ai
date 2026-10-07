@@ -47,6 +47,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   return (
     <div
+      role="status"
       aria-busy={isPending || signedOut}
       aria-label="Loading"
       className="mx-auto w-full max-w-6xl px-5 py-16 sm:px-8"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCurrentUser } from "@/features/auth/hooks";
+import { TravelStyleCard } from "@/features/travel-profile/components/travel-style-card";
 
 function greetingFor(hour: number): string {
   if (hour < 5) return "Still up";
@@ -20,18 +21,9 @@ export function UniverseHome() {
         {greetingFor(new Date().getHours())}, {user.display_name}.
       </h1>
 
-      <section
-        aria-labelledby="first-trip-heading"
-        className="mt-12 rounded-3xl border bg-card p-8 sm:p-12"
-      >
-        <h2 id="first-trip-heading" className="text-2xl font-semibold sm:text-3xl">
-          Your travel universe starts here.
-        </h2>
-        <p className="mt-3 max-w-xl text-muted-foreground">
-          This is where your upcoming trips, saved places and travel style will live. Trip planning
-          and your travel profile are being built next — your account is ready for them.
-        </p>
-      </section>
+      <div className="mt-12">
+        <TravelStyleCard />
+      </div>
     </div>
   );
 }
