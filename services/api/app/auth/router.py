@@ -13,6 +13,7 @@ from app.auth.dependencies import (
     ClientIp,
     CurrentAuthDep,
     CurrentUser,
+    DbSession,
     OptionalAuth,
     RateLimiterDep,
     SettingsDep,
@@ -23,6 +24,7 @@ from app.auth.service import ClientInfo
 from app.core.config import Settings
 from app.core.security import csrf_token_is_valid, new_csrf_token
 from app.users.schemas import UserOut
+from app.users.service import user_out
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -62,13 +64,14 @@ async def register(
     settings: SettingsDep,
     ip: ClientIp,
     client: ClientInfoDep,
+    db: DbSession,
 ) -> UserOut:
     await limiter.hit(
         "register:ip", ip, limit=settings.rate_limit_auth_per_minute, window_s=RATE_WINDOW_S
     )
     issued = await service.register(data, client)
     _issue_cookies(response, issued.token, settings)
-    return UserOut.model_validate(issued.user)
+    return await user_out(db, issued.user)
 
 
 @router.post("/login", response_model=UserOut, summary="Sign in with email and password")
@@ -80,13 +83,14 @@ async def login(
     settings: SettingsDep,
     ip: ClientIp,
     client: ClientInfoDep,
+    db: DbSession,
 ) -> UserOut:
     limit = settings.rate_limit_auth_per_minute
     await limiter.hit("login:ip", ip, limit=limit, window_s=RATE_WINDOW_S)
     await limiter.hit("login:email", data.email, limit=max(limit // 2, 1), window_s=RATE_WINDOW_S)
     issued = await service.login(data, client)
     _issue_cookies(response, issued.token, settings)
-    return UserOut.model_validate(issued.user)
+    return await user_out(db, issued.user)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, summary="Sign out of this session")
@@ -110,5 +114,5 @@ async def logout_all(
 
 
 @router.get("/me", response_model=UserOut, summary="The signed-in user")
-async def me(user: CurrentUser) -> UserOut:
-    return UserOut.model_validate(user)
+async def me(user: CurrentUser, db: DbSession) -> UserOut:
+    return await user_out(db, user)

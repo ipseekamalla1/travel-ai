@@ -137,10 +137,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Your account */
+        get: operations["get_me_api_v1_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update account settings */
+        patch: operations["patch_me_api_v1_me_patch"];
+        trace?: never;
+    };
+    "/api/v1/me/travel-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Your travel profile */
+        get: operations["get_profile_api_v1_me_travel_profile_get"];
+        /** Replace core profile fields */
+        put: operations["replace_profile_api_v1_me_travel_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/travel-profile/complete-onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark onboarding as finished */
+        post: operations["complete_onboarding_api_v1_me_travel_profile_complete_onboarding_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/travel-profile/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Add, change or remove weighted preferences */
+        patch: operations["patch_preferences_api_v1_me_travel_profile_preferences_patch"];
+        trace?: never;
+    };
+    "/api/v1/meta/travel-profile-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Allowed travel-profile values and labels */
+        get: operations["options_api_v1_meta_travel_profile_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AccommodationStyle
+         * @enum {string}
+         */
+        AccommodationStyle: "hostel" | "budget_hotel" | "boutique" | "luxury" | "apartment";
+        /**
+         * BudgetStyle
+         * @enum {string}
+         */
+        BudgetStyle: "shoestring" | "moderate" | "comfortable" | "luxury";
         /** CsrfTokenOut */
         CsrfTokenOut: {
             /** Csrf Token */
@@ -170,6 +267,78 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** OptionOut */
+        OptionOut: {
+            /** Description */
+            description: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+        };
+        /**
+         * Pace
+         * @enum {string}
+         */
+        Pace: "relaxed" | "balanced" | "packed";
+        /** PreferenceGroupOut */
+        PreferenceGroupOut: {
+            /** Id */
+            id: string;
+            /** Keys */
+            keys: components["schemas"]["PreferenceKeyOut"][];
+            /** Label */
+            label: string;
+        };
+        /** PreferenceKeyOut */
+        PreferenceKeyOut: {
+            /** Description */
+            description: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+        };
+        /** PreferenceOut */
+        PreferenceOut: {
+            /** Key */
+            key: string;
+            /** Source */
+            source: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Weight */
+            weight: number;
+        };
+        /** PreferenceUpsert */
+        PreferenceUpsert: {
+            /** Key */
+            key: string;
+            /** Weight */
+            weight: number | string;
+        };
+        /** PreferencesPatch */
+        PreferencesPatch: {
+            /**
+             * Remove
+             * @default []
+             */
+            remove: string[];
+            /**
+             * Source
+             * @default explicit
+             * @enum {string}
+             */
+            source: "onboarding" | "explicit";
+            /**
+             * Upsert
+             * @default []
+             */
+            upsert: components["schemas"]["PreferenceUpsert"][];
+        };
         /** ReadinessResponse */
         ReadinessResponse: {
             /** Components */
@@ -194,6 +363,98 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** TravelProfileOptions */
+        TravelProfileOptions: {
+            /** Accommodation Styles */
+            accommodation_styles: components["schemas"]["OptionOut"][];
+            /** Budget Styles */
+            budget_styles: components["schemas"]["OptionOut"][];
+            /** Currencies */
+            currencies: string[];
+            /** Dietary */
+            dietary: components["schemas"]["OptionOut"][];
+            /** Max Travel Styles */
+            max_travel_styles: number;
+            /** Paces */
+            paces: components["schemas"]["OptionOut"][];
+            /** Preference Groups */
+            preference_groups: components["schemas"]["PreferenceGroupOut"][];
+            /** Travel Styles */
+            travel_styles: components["schemas"]["OptionOut"][];
+            /** Walking Tolerances */
+            walking_tolerances: components["schemas"]["OptionOut"][];
+        };
+        /** TravelProfileOut */
+        TravelProfileOut: {
+            accommodation_style?: components["schemas"]["AccommodationStyle"] | null;
+            /** @default moderate */
+            budget_style: components["schemas"]["BudgetStyle"];
+            /**
+             * Day End
+             * Format: time
+             * @default 21:00:00
+             */
+            day_end: string;
+            /**
+             * Day Start
+             * Format: time
+             * @default 09:00:00
+             */
+            day_start: string;
+            /**
+             * Dietary
+             * @default []
+             */
+            dietary: string[];
+            /** Onboarding Completed */
+            onboarding_completed: boolean;
+            /** @default balanced */
+            pace: components["schemas"]["Pace"];
+            /** Preferences */
+            preferences: components["schemas"]["PreferenceOut"][];
+            /**
+             * Travel Styles
+             * @default []
+             */
+            travel_styles: string[];
+            /** @default medium */
+            walking_tolerance: components["schemas"]["WalkingTolerance"];
+        };
+        /**
+         * TravelProfileUpdate
+         * @description Full replacement of the core profile fields (PUT).
+         */
+        TravelProfileUpdate: {
+            accommodation_style?: components["schemas"]["AccommodationStyle"] | null;
+            /** @default moderate */
+            budget_style: components["schemas"]["BudgetStyle"];
+            /**
+             * Day End
+             * Format: time
+             * @default 21:00:00
+             */
+            day_end: string;
+            /**
+             * Day Start
+             * Format: time
+             * @default 09:00:00
+             */
+            day_start: string;
+            /**
+             * Dietary
+             * @default []
+             */
+            dietary: string[];
+            /** @default balanced */
+            pace: components["schemas"]["Pace"];
+            /**
+             * Travel Styles
+             * @default []
+             */
+            travel_styles: string[];
+            /** @default medium */
+            walking_tolerance: components["schemas"]["WalkingTolerance"];
+        };
         /** UserOut */
         UserOut: {
             /**
@@ -214,8 +475,22 @@ export interface components {
             id: string;
             /** Locale */
             locale: string;
+            /** Onboarding Completed */
+            onboarding_completed: boolean;
             /** Units */
             units: string;
+        };
+        /**
+         * UserUpdate
+         * @description PATCH /me — only the fields sent are changed.
+         */
+        UserUpdate: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Home Currency */
+            home_currency?: string | null;
+            /** Units */
+            units?: ("metric" | "imperial") | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -230,6 +505,11 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /**
+         * WalkingTolerance
+         * @enum {string}
+         */
+        WalkingTolerance: "low" | "medium" | "high";
     };
     responses: never;
     parameters: never;
@@ -426,6 +706,185 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadinessResponse"];
+                };
+            };
+        };
+    };
+    get_me_api_v1_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+        };
+    };
+    patch_me_api_v1_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_profile_api_v1_me_travel_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TravelProfileOut"];
+                };
+            };
+        };
+    };
+    replace_profile_api_v1_me_travel_profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TravelProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TravelProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_onboarding_api_v1_me_travel_profile_complete_onboarding_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TravelProfileOut"];
+                };
+            };
+        };
+    };
+    patch_preferences_api_v1_me_travel_profile_preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TravelProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    options_api_v1_meta_travel_profile_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TravelProfileOptions"];
                 };
             };
         };

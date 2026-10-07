@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends
 from app.auth.dependencies import require_csrf
 from app.auth.router import router as auth_router
 from app.health.router import router as health_router
+from app.travel_profiles.router import router as travel_profile_router
+from app.users.router import router as users_router
 
 API_V1_PREFIX = "/api/v1"
 
@@ -10,3 +12,5 @@ API_V1_PREFIX = "/api/v1"
 router = APIRouter(prefix=API_V1_PREFIX, dependencies=[Depends(require_csrf)])
 router.include_router(health_router)
 router.include_router(auth_router)
+router.include_router(users_router)
+router.include_router(travel_profile_router)
