@@ -1,24 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-// Test-only credential for accounts created by this suite.
-const PASSWORD = "correct-horse-battery-7";
-
-function uniqueEmail(testId: string): string {
-  return `e2e-${testId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
-}
-
-async function registerViaUi(page: Page, name: string, email: string) {
-  await page.goto("/register");
-  await page.getByLabel("What should we call you?").fill(name);
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).toHaveURL(/\/universe$/);
-}
+import { PASSWORD, registerViaUi, uniqueEmail } from "../support/auth";
 
 test.describe("authentication", () => {
-  test("register lands in the universe and the session survives a reload", async ({ page }) => {
+  test("registration signs in and the session survives a reload", async ({ page }) => {
     await registerViaUi(page, "Maya", uniqueEmail("reg"));
 
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
@@ -109,6 +95,7 @@ test.describe("authentication", () => {
 
   test("no detectable accessibility violations on /universe", async ({ page }) => {
     await registerViaUi(page, "Axe", uniqueEmail("a11y"));
+    await expect(page.locator("[aria-busy=true]")).toHaveCount(0);
 
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
 
